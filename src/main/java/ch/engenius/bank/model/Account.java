@@ -5,6 +5,7 @@ import ch.engenius.bank.exceptions.InvalidAmountException;
 import java.math.BigDecimal;
 
 public class Account {
+
     private int accountNumber;
     private BigDecimal money;
 
@@ -15,7 +16,7 @@ public class Account {
 
     public synchronized void withdraw(double amount) {
         BigDecimal withdrawAmount = BigDecimal.valueOf(amount);
-        BigDecimal result = getMoneyAsBigDecimal().subtract(withdrawAmount);
+        BigDecimal result = this.money.subtract(withdrawAmount);
         if (BigDecimal.ZERO.compareTo(result) > 0) {
             throw new InvalidAmountException("Not enough credits on account: " + result.doubleValue());
         }
@@ -24,7 +25,7 @@ public class Account {
 
     public synchronized void deposit(double amount) {
         BigDecimal depositAmount = BigDecimal.valueOf(amount);
-        BigDecimal result = getMoneyAsBigDecimal().add(depositAmount);
+        BigDecimal result = this.money.add(depositAmount);
         setMoney(result);
     }
 

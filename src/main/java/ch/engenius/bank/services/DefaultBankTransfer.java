@@ -10,30 +10,45 @@ public class DefaultBankTransfer implements BankTransfer {
 
     @Override
     public boolean transfer(Account from, Account to, double amount) {
-        boolean tranferSuccessful = true;
-        boolean withdrawalSuccessful = true;
+        boolean isTranferSuccessful = true;
+        boolean isWithdrawalSuccessful = true;
+
+        isWithdrawalSuccessful = withdraw(from, amount, isWithdrawalSuccessful);
+
+        if (isWithdrawalSuccessful) {
+            boolean isDepositSuccessful = deposit(to, amount);
+            if (!isDepositSuccessful) {
+                isTranferSuccessful = false;
+                // try to revert withdrawal
+                boolean isRevertSuccessful = deposit(from, amount);
+                if (isRevertSuccessful) {
+                    LOGGER.error("Reverting withdrawal failed.");
+                }
+            }
+        } else {
+            isTranferSuccessful = false;
+        }
+        return isTranferSuccessful;
+    }
+
+    private boolean deposit(Account toAccount, double amount) {
+        boolean depositSuccessful = true;
+        try {
+            toAccount.deposit(amount);
+        } catch (Exception e) {
+            LOGGER.error(String.format("Deposit to account %s failed", toAccount.getAccountNumber()));
+            depositSuccessful = false;
+        }
+        return depositSuccessful;
+    }
+
+    private boolean withdraw(Account from, double amount, boolean withdrawalSuccessful) {
         try {
             from.withdraw(amount);
         } catch (Exception e) {
             LOGGER.error(String.format("Withdrawal from account %s failed", from.getAccountNumber()));
             withdrawalSuccessful = false;
-            tranferSuccessful = false;
         }
-
-        if (withdrawalSuccessful) {
-            try {
-                to.deposit(amount);
-            } catch (Exception e) {
-                LOGGER.error(String.format("Deposit to account %s failed", from.getAccountNumber()));
-                tranferSuccessful = false;
-                // try to revert withdrawal
-                try {
-                    from.deposit(amount);
-                } catch (Exception ex) {
-                    LOGGER.error("Reverting withdrawal failed.");
-                }
-            }
-        }
-        return tranferSuccessful;
+        return withdrawalSuccessful;
     }
 }
